@@ -18,19 +18,19 @@ import (
 // based on whatever is in the sql.Rows you pass in. It calls WriteCsvToWriter under
 // the hood.
 func WriteFile(csvFileName string, rows *sql.Rows) error {
-	return New(rows).WriteFile(csvFileName)
+	return New(rows, ',').WriteFile(csvFileName)
 }
 
 // WriteString will return a string of the CSV. Don't use this unless you've
 // got a small data set or a lot of memory
 func WriteString(rows *sql.Rows) (string, error) {
-	return New(rows).WriteString()
+	return New(rows, ',').WriteString()
 }
 
 // Write will write a CSV file to the writer passed in (with headers)
 // based on whatever is in the sql.Rows you pass in.
 func Write(writer io.Writer, rows *sql.Rows) error {
-	return New(rows).Write(writer)
+	return New(rows, ',').Write(writer)
 }
 
 // CsvPreprocessorFunc is a function type for preprocessing your CSV.
@@ -48,7 +48,7 @@ type Converter struct {
 	Headers      []string // Column headers to use (default is rows.Columns())
 	WriteHeaders bool     // Flag to output headers in your CSV (default is true)
 	TimeFormat   string   // Format string for any time.Time values (default is time's default)
-
+	Delimeter	 rune
 	rows            *sql.Rows
 	rowPreProcessor CsvPreProcessorFunc
 }
@@ -91,10 +91,10 @@ func (c Converter) WriteFile(csvFileName string) error {
 }
 
 // Write writes the CSV to the Writer provided
-func (c Converter) WriteWithDelim(writer io.Writer, delim rune) error {
+func (c Converter) Write(writer io.Writer) error {
 	rows := c.rows
 	csvWriter := csv.NewWriter(writer)
-	csvWriter.Comma = delim
+	csvWriter.Comma = c.Delimeter
 
 	columnNames, err := rows.Columns()
 	if err != nil {
@@ -174,16 +174,13 @@ func (c Converter) WriteWithDelim(writer io.Writer, delim rune) error {
 	return err
 }
 
-func (c Converter) Write(writer io.Writer) error {
-	return c.WriteWithDelim(writer, ',')
-}
-
 // New will return a Converter which will write your CSV however you like
 // but will allow you to set a bunch of non-default behaivour like overriding
 // headers or injecting a pre-processing step into your conversion
-func New(rows *sql.Rows) *Converter {
+func New(rows *sql.Rows, delim rune) *Converter {
 	return &Converter{
 		rows:         rows,
 		WriteHeaders: true,
+		Delimeter:delim,
 	}
 }

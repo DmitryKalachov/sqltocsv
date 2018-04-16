@@ -91,9 +91,10 @@ func (c Converter) WriteFile(csvFileName string) error {
 }
 
 // Write writes the CSV to the Writer provided
-func (c Converter) Write(writer io.Writer) error {
+func (c Converter) WriteWithDelim(writer io.Writer, delim rune) error {
 	rows := c.rows
 	csvWriter := csv.NewWriter(writer)
+	csvWriter.Comma = delim
 
 	columnNames, err := rows.Columns()
 	if err != nil {
@@ -171,6 +172,10 @@ func (c Converter) Write(writer io.Writer) error {
 	csvWriter.Flush()
 
 	return err
+}
+
+func (c Converter) Write(writer io.Writer) error {
+	return c.WriteWithDelim(writer, ',')
 }
 
 // New will return a Converter which will write your CSV however you like
